@@ -1,19 +1,86 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>User page</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+    <style>
+        body { background: #f8f9fa; }
+        .topbar { height: 56px; }
+        .sidebar { min-height: calc(100vh - 56px); background: #fff; border-right: 1px solid #dee2e6; }
+        .sidebar .nav-link { border-radius: 0; }
+        .sidebar .nav-link.active { background: #0d6efd; color: #fff; }
+        .content { padding: 24px 24px 48px; }
+        .page-title { font-size: 48px; font-weight: 500; margin-bottom: 16px; }
+        .card { border-color: #dee2e6; }
+        .card-header { background: #fff; border-bottom-color: #dee2e6; font-weight: 500; }
+        .table thead th { font-weight: 600; }
+    </style>
 </head>
 <body>
 
-<h1>User page</h1>
+<nav class="navbar navbar-dark bg-dark topbar">
+    <div class="container-fluid">
+        <div class="text-white fw-semibold">
+            <span th:text="${currentEmail}">user@mail.ru</span>
+            <span class="fw-normal"> with roles: </span>
+            <span th:text="${currentRoles}">USER</span>
+        </div>
 
-<p>ID: <span th:text="${user.id}"></span></p>
-<p>Username: <span th:text="${user.username}"></span></p>
+        <form th:action="@{/logout}" method="post" class="d-flex">
+            <button class="btn btn-link text-white text-decoration-none px-0" type="submit">Logout</button>
+        </form>
+    </div>
+</nav>
 
-<form th:action="@{/logout}" method="post">
-    <button type="submit">Logout</button>
-</form>
+<div class="container-fluid">
+    <div class="row">
+        <aside class="col-2 p-0 sidebar">
+            <nav class="nav flex-column pt-3">
+                <a class="nav-link active px-3" th:href="@{/user}">User</a>
+            </nav>
+        </aside>
 
+        <main class="col-10 content">
+            <div class="page-title">User information-page</div>
+
+            <div class="card">
+                <div class="card-header">About user</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Age</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td th:text="${user.id}">3</td>
+                                <td th:text="${user.firstName}">user</td>
+                                <td th:text="${user.lastName}">user</td>
+                                <td th:text="${user.age}">30</td>
+                                <td th:text="${user.email}">user@mail.ru</td>
+                                <td th:text="${#strings.arrayJoin(user.roles.![name], ' ')}">USER</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
