@@ -8,12 +8,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class SpringBootSecurityDemoApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SpringBootSecurityDemoApplication.class, args);
-		String hashFromDb = "$2a$10$a3vofdDr17mQe/O752/VP.h9005JCrmr8NwJ1rLh3gxdlaieToDaS";
-		BCryptPasswordEncoder enc = new BCryptPasswordEncoder();
-
-		System.out.println(enc.matches("admin", hashFromDb));
-		System.out.println(enc.matches("password", hashFromDb));
+		SpringApplication app = new  SpringApplication(SpringBootSecurityDemoApplication.class);
+		app.setLazyInitialization(true);
+		app.run(args);
 	}
 
 }
