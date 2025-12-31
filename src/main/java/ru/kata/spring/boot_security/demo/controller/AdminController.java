@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
-import ru.kata.spring.boot_security.demo.service.UserService;
+import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
 
 import java.util.HashSet;
 import java.util.List;
@@ -21,13 +21,13 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final RoleRepository roleRepository;
-    private final UserService userService;
+    private final UserServiceImpl userServiceImpl;
     private final PasswordEncoder passwordEncoder;
 
-    public AdminController(UserService userService,
+    public AdminController(UserServiceImpl userServiceImpl,
                            RoleRepository roleRepository,
                            PasswordEncoder passwordEncoder) {
-        this.userService = userService;
+        this.userServiceImpl = userServiceImpl;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -35,7 +35,7 @@ public class AdminController {
     @GetMapping
     public String admin(Model model, Authentication authentication) {
         fillHeader(model, authentication);
-        model.addAttribute("users", userService.findAll());
+        model.addAttribute("users", userServiceImpl.findAll());
         model.addAttribute("allRoles", roleRepository.findAll());
         return "users-list";
     }
@@ -43,7 +43,7 @@ public class AdminController {
     @GetMapping("/edit")
     public String edit(@RequestParam("id") Long id, Model model, Authentication authentication) {
         fillHeader(model, authentication);
-        model.addAttribute("user", userService.findById(id));
+        model.addAttribute("user", userServiceImpl.findById(id));
         model.addAttribute("allRoles", roleRepository.findAll());
         return "user-form";
     }
@@ -68,20 +68,20 @@ public class AdminController {
         if (rawPassword != null && !rawPassword.isBlank()) {
             user.setPassword(passwordEncoder.encode(rawPassword));
         } else if (!creating) {
-            User fromDb = userService.findById(user.getId());
+            User fromDb = userServiceImpl.findById(user.getId());
             user.setPassword(fromDb.getPassword());
         } else {
             throw new IllegalArgumentException("Password cannot be empty for new user");
         }
 
-        userService.save(user);
+        userServiceImpl.save(user);
         return "redirect:/admin";
     }
 
 
     @PostMapping("/delete")
     public String delete(@RequestParam("id") Long id) {
-        userService.deleteById(id);
+        userServiceImpl.deleteById(id);
         return "redirect:/admin";
     }
 
