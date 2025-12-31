@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
+import ru.kata.spring.boot_security.demo.service.UserService;
 import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
 
 import java.util.HashSet;
@@ -21,10 +22,10 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final RoleRepository roleRepository;
-    private final UserServiceImpl userServiceImpl;
+    private final UserService userServiceImpl;
     private final PasswordEncoder passwordEncoder;
 
-    public AdminController(UserServiceImpl userServiceImpl,
+    public AdminController(UserService userServiceImpl,
                            RoleRepository roleRepository,
                            PasswordEncoder passwordEncoder) {
         this.userServiceImpl = userServiceImpl;
