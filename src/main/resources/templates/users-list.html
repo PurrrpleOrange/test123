@@ -533,7 +533,7 @@
             }
         });
 
-        Promise.all([loadRoles(), loadUsers()]).catch(() => {
+        Promise.all([loadRoles(), loadUsers(), loadCurrentUser()]).catch(() => {
             alert("Failed to load data");
         });
         loadCurrentUser().catch(() => {
