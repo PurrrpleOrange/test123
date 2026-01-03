@@ -291,6 +291,7 @@
         const csrfToken = document.querySelector('meta[name="_csrf"]').content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
         const usersCache = new Map();
+        let currentUserId = null;
 
         const apiHeaders = () => ({
             "Content-Type": "application/json",
@@ -359,6 +360,15 @@
             }
             const users = await response.json();
             renderUsers(users);
+        };
+
+        const loadCurrentUser = async () => {
+            const response = await fetch("/api/users/current");
+            if (!response.ok) {
+                throw new Error("Failed to load current user");
+            }
+            const user = await response.json();
+            currentUserId = user.id;
         };
 
         const gatherSelectedRoles = (select) =>
@@ -445,6 +455,14 @@
 
             deleteModal.hide();
             await loadUsers();
+            if (currentUserId && Number(userId) === currentUserId) {
+                await fetch("/logout", {
+                    method: "POST",
+                    headers: { [csrfHeader]: csrfToken }
+                });
+                window.location.href = "/login?logout";
+                return;
+            }
             showSuccess("User deleted successfully.");
         });
 
@@ -487,7 +505,7 @@
             }
         });
 
-        Promise.all([loadRoles(), loadUsers()]).catch(() => {
+        Promise.all([loadRoles(), loadUsers(), loadCurrentUser()]).catch(() => {
             alert("Failed to load data");
         });
     });
