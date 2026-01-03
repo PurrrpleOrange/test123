@@ -3,6 +3,8 @@ package ru.kata.spring.boot_security.demo.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.dto.RoleResponse;
 import ru.kata.spring.boot_security.demo.dto.UserRequest;
@@ -60,11 +62,15 @@ public class UserRestController {
     }
 
     @PutMapping("/users/{id}")
-    public UserResponse update(@PathVariable Long id, @RequestBody UserRequest request) {
+    public UserResponse update(@PathVariable Long id,
+                               @RequestBody UserRequest request,
+                               Authentication authentication) {
         User user = toEntity(request);
         user.setId(id);
         userService.saveUser(user, request.getRoleIds(), request.getRawPassword());
-        return toResponse(userService.findById(id));
+        User updatedUser = userService.findById(id);
+        refreshAuthenticationIfCurrentUser(updatedUser, authentication);
+        return toResponse(updatedUser);
     }
 
     @DeleteMapping("/users/{id}")
@@ -97,5 +103,22 @@ public class UserRestController {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         return user;
+    }
+
+    private void refreshAuthenticationIfCurrentUser(User updatedUser, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+            return;
+        }
+        User currentUser = (User) authentication.getPrincipal();
+        if (!updatedUser.getId().equals(currentUser.getId())) {
+            return;
+        }
+        UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(
+                updatedUser,
+                authentication.getCredentials(),
+                updatedUser.getAuthorities()
+        );
+        newAuth.setDetails(authentication.getDetails());
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
 }
