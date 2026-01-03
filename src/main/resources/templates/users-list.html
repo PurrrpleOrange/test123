@@ -365,6 +365,7 @@
 
         const loadCurrentUser = async () => {
             const response = await fetch("/api/users/current", { credentials: "same-origin" });
+            const response = await fetch("/api/users/current");
             if (!response.ok) {
                 throw new Error("Failed to load current user");
             }
@@ -487,6 +488,7 @@
                     method: "POST",
                     headers: { [csrfHeader]: csrfToken },
                     credentials: "same-origin"
+                    headers: { [csrfHeader]: csrfToken }
                 });
                 window.location.href = "/login?logout";
                 return;
