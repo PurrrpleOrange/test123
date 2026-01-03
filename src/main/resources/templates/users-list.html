@@ -260,6 +260,21 @@
     </div>
 </div>
 
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Success</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="successMessage"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -271,9 +286,13 @@
         const deleteButton = document.getElementById("confirmDelete");
         const editModal = new bootstrap.Modal(document.getElementById("editModal"));
         const deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+        const successModal = new bootstrap.Modal(document.getElementById("successModal"));
+        const successMessage = document.getElementById("successMessage");
         const csrfToken = document.querySelector('meta[name="_csrf"]').content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
         const usersCache = new Map();
+        let currentUserId = null;
+        let currentUserRoles = [];
 
         const apiHeaders = () => ({
             "Content-Type": "application/json",
@@ -281,6 +300,11 @@
         });
 
         const rolesToString = (roles) => roles.map(role => role.name).join(" ");
+
+        const showSuccess = (message) => {
+            successMessage.textContent = message;
+            successModal.show();
+        };
 
         const fillRoleSelect = (select, roles) => {
             select.innerHTML = "";
@@ -339,6 +363,16 @@
             renderUsers(users);
         };
 
+        const loadCurrentUser = async () => {
+            const response = await fetch("/api/users/current", { credentials: "same-origin" });
+            if (!response.ok) {
+                throw new Error("Failed to load current user");
+            }
+            const user = await response.json();
+            currentUserId = user.id;
+            currentUserRoles = user.roles.map(role => role.name);
+        };
+
         const gatherSelectedRoles = (select) =>
             Array.from(select.selectedOptions).map(option => Number(option.value));
 
@@ -376,11 +410,28 @@
 
             resetForm(newUserForm);
             await loadUsers();
+            showSuccess("User created successfully.");
         });
 
         editUserForm.addEventListener("submit", async (event) => {
             event.preventDefault();
             const userId = document.getElementById("editId").value;
+            const selectedRoleIds = gatherSelectedRoles(editRolesSelect);
+            if (currentUserId && Number(userId) === currentUserId) {
+                const isAdmin = currentUserRoles.includes("ROLE_ADMIN");
+                const selectedRoleNames = Array.from(editRolesSelect.selectedOptions)
+                    .map(option => option.textContent);
+                const willLoseAdmin = isAdmin && !selectedRoleNames.includes("ROLE_ADMIN");
+                if (willLoseAdmin) {
+                    const confirmed = window.confirm(
+                        "Warning: after changing your role you will lose access to the admin user list. " +
+                        "Restoring admin access will require another admin account. Continue?"
+                    );
+                    if (!confirmed) {
+                        return;
+                    }
+                }
+            }
             const payload = {
                 id: Number(userId),
                 firstName: document.getElementById("editFirstName").value,
@@ -389,7 +440,7 @@
                 username: document.getElementById("editUsername").value,
                 email: document.getElementById("editEmail").value,
                 rawPassword: document.getElementById("editPassword").value,
-                roleIds: gatherSelectedRoles(editRolesSelect)
+                roleIds: selectedRoleIds
             };
 
             const response = await fetch(`/api/users/${userId}`, {
@@ -405,10 +456,20 @@
 
             editModal.hide();
             await loadUsers();
+            showSuccess("User updated successfully.");
         });
 
         deleteButton.addEventListener("click", async () => {
             const userId = deleteButton.dataset.userId;
+            if (currentUserId && Number(userId) === currentUserId) {
+                const confirmed = window.confirm(
+                    "Warning: you are deleting the account you are currently logged in with. " +
+                    "This action is irreversible and you will be logged out. Continue?"
+                );
+                if (!confirmed) {
+                    return;
+                }
+            }
             const response = await fetch(`/api/users/${userId}`, {
                 method: "DELETE",
                 headers: apiHeaders()
@@ -421,6 +482,16 @@
 
             deleteModal.hide();
             await loadUsers();
+            if (currentUserId && Number(userId) === currentUserId) {
+                await fetch("/logout", {
+                    method: "POST",
+                    headers: { [csrfHeader]: csrfToken },
+                    credentials: "same-origin"
+                });
+                window.location.href = "/login?logout";
+                return;
+            }
+            showSuccess("User deleted successfully.");
         });
 
         usersTableBody.addEventListener("click", (event) => {
@@ -462,7 +533,7 @@
             }
         });
 
-        Promise.all([loadRoles(), loadUsers()]).catch(() => {
+        Promise.all([loadRoles(), loadUsers(), loadCurrentUser()]).catch(() => {
             alert("Failed to load data");
         });
     });
