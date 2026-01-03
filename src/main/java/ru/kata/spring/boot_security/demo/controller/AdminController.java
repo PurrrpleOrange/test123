@@ -2,13 +2,10 @@ package ru.kata.spring.boot_security.demo.controller;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.repository.RoleRepository;
-import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
 import java.util.List;
@@ -18,21 +15,15 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin")
 public class AdminController {
 
-    private final RoleService roleService;
     private final UserService userService;
 
-    public AdminController(UserService userServiceImpl,
-                           RoleService roleService,
-                           PasswordEncoder passwordEncoder) {
+    public AdminController(UserService userServiceImpl) {
         this.userService = userServiceImpl;
-        this.roleService = roleService;
     }
 
     @GetMapping
     public String admin(Model model, Authentication authentication) {
         fillHeader(model, authentication);
-        model.addAttribute("users", userService.findAll());
-        model.addAttribute("allRoles", roleService.findAll());
         return "users-list";
     }
 
