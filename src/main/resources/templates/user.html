@@ -90,7 +90,7 @@
     document.addEventListener("DOMContentLoaded", async () => {
         const userInfoBody = document.getElementById("userInfoBody");
         try {
-            const response = await fetch("/api/users/current");
+            const response = await fetch("/api/users/current", { credentials: "same-origin" });
             if (!response.ok) {
                 throw new Error("Failed to load user");
             }
